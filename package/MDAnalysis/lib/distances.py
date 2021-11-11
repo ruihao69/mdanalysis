@@ -1363,15 +1363,15 @@ def calc_bonds_vector(coords1, coords2, box=None, result=None, backend="serial")
             boxtype, box = check_box(box)
             if boxtype == 'ortho':
                 _run("calc_bond_vector_ortho",
-                     args=(coords1, coords2, box, bondlengths),
+                     args=(coords1, coords2, box, bondvectors),
                      backend=backend)
             else:
                 _run("calc_bond_vector_triclinic",
-                     args=(coords1, coords2, box, bondlengths),
+                     args=(coords1, coords2, box, bondvectors),
                      backend=backend)
         else:
             _run("calc_bond_vector",
-                 args=(coords1, coords2, bondlengths),
+                 args=(coords1, coords2, bondvectors),
                  backend=backend)
 
     return bondvectors
