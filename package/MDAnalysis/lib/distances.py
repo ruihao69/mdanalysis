@@ -111,8 +111,11 @@ from .c_distances import (calc_distance_array,
                           calc_self_distance_array_triclinic,
                           coord_transform,
                           calc_bond_distance,
+                          calc_bond_vector,
                           calc_bond_distance_ortho,
+                          calc_bond_vector_ortho,
                           calc_bond_distance_triclinic,
+                          calc_bond_vector_triclinic,
                           calc_angle,
                           calc_angle_ortho,
                           calc_angle_triclinic,
@@ -1310,6 +1313,68 @@ def calc_bonds(coords1, coords2, box=None, result=None, backend="serial"):
                  backend=backend)
 
     return bondlengths
+
+@check_coords('coords1', 'coords2')
+def calc_bonds_vector(coords1, coords2, box=None, result=None, backend="serial"):
+    """Calculates pair-wise vector bettween coords1 and coords2.
+    If box is assigned, minimum image convention will be applied
+    Parameters
+    ----------
+    coords1 : numpy.ndarray
+        Coordinate array of shape ``(3,)`` or ``(n, 3)`` for one half of a
+        single or ``n`` bonds, respectively (dtype is arbitrary, will be
+        converted to ``numpy.float32`` internally).
+    coords2 : numpy.ndarray
+        Coordinate array of shape ``(3,)`` or ``(n, 3)`` for the other half of
+        a single or ``n`` bonds, respectively (dtype is arbitrary, will be
+        converted to ``numpy.float32`` internally).
+    box : numpy.ndarray, optional
+        The unitcell dimensions of the system, which can be orthogonal or
+        triclinic and must be provided in the same format as returned by
+        :attr:`MDAnalysis.coordinates.base.Timestep.dimensions`:
+        ``[lx, ly, lz, alpha, beta, gamma]``.
+    result : numpy.ndarray, optional
+        Preallocated result array of dtype ``numpy.float64`` and shape ``(n, 3)``
+        (for ``n`` coordinate pairs). Avoids recreating the array in repeated
+        function calls.
+    backend : {'serial', 'OpenMP'}, optional
+        Keyword selecting the type of acceleration.
+
+    Returns
+    -------
+    bondlengths : numpy.ndarray (``dtype=numpy.float64``, ``shape=(n,)``) or numpy.float64
+        Array containing the bond lengths between each pair of coordinates. If
+        two single coordinates were supplied, their distance is returned as a
+        single number instead of an array.
+
+
+    .. versionadded:: 0.8
+    .. versionchanged:: 0.13.0
+       Added *backend* keyword.
+    .. versionchanged:: 0.19.0
+       Internal dtype conversion of input coordinates to ``numpy.float32``.
+       Now also accepts single coordinates as input.
+    """
+    numatom = coords1.shape[0]
+    bondvectors = _check_result_array(result, (numatom, 3))
+
+    if numatom > 0:
+        if box is not None:
+            boxtype, box = check_box(box)
+            if boxtype == 'ortho':
+                _run("calc_bond_vector_ortho",
+                     args=(coords1, coords2, box, bondlengths),
+                     backend=backend)
+            else:
+                _run("calc_bond_vector_triclinic",
+                     args=(coords1, coords2, box, bondlengths),
+                     backend=backend)
+        else:
+            _run("calc_bond_vector",
+                 args=(coords1, coords2, bondlengths),
+                 backend=backend)
+
+    return bondvectors
 
 
 @check_coords('coords1', 'coords2', 'coords3')

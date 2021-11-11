@@ -25,8 +25,6 @@
 """
 Parallel distance calculation library --- :mod:`MDAnalysis.lib.c_distances_openmp`
 ==================================================================================
-
-
 Contains OpenMP versions of the contents of "calc_distances.h"
 """
 
@@ -49,6 +47,9 @@ cdef extern from "calc_distances.h":
     void _calc_bond_distance(coordinate* atom1, coordinate* atom2, int numatom, double* distances)
     void _calc_bond_distance_ortho(coordinate* atom1, coordinate* atom2, int numatom, float* box, double* distances)
     void _calc_bond_distance_triclinic(coordinate* atom1, coordinate* atom2, int numatom, float* box, double* distances)
+    void _calc_bond_vector(coordinate* atom1, coordinate* atom2, int numatom, double* vectors)
+    void _calc_bond_vector_ortho(coordinate* atom1, coordinate* atom2, int numatom, float* box, double* vectors)
+    void _calc_bond_vector_triclinic(coordinate* atom1, coordinate* atom2, int numatom, float* box, double* vectors)
     void _calc_angle(coordinate* atom1, coordinate* atom2, coordinate* atom3, int numatom, double* angles)
     void _calc_angle_ortho(coordinate* atom1, coordinate* atom2, coordinate* atom3, int numatom, float* box, double* angles)
     void _calc_angle_triclinic(coordinate* atom1, coordinate* atom2, coordinate* atom3, int numatom, float* box, double* angles)
@@ -149,6 +150,16 @@ def calc_bond_distance_triclinic(numpy.ndarray coords1, numpy.ndarray coords2,
     _calc_bond_distance_triclinic(<coordinate*> coords1.data,
                                   <coordinate*> coords2.data, numcoords,
                                   <float*> box.data, <double*> results.data)
+
+def calc_bond_vector_triclinic(numpy.ndarray coords1, numpy.ndarray coords2,
+                                 numpy.ndarray box, numpy.ndarray results):
+    cdef int numcoords
+    numcoords = coords1.shape[0]
+
+    _calc_bond_vector_triclinic(<coordinate*> coords1.data,
+                                  <coordinate*> coords2.data, numcoords,
+                                  <float*> box.data, <double*> results.data)
+
 
 def calc_angle(numpy.ndarray coords1, numpy.ndarray coords2,
                numpy.ndarray coords3, numpy.ndarray results):
