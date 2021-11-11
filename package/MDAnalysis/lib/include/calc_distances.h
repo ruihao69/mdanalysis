@@ -586,6 +586,25 @@ static void _calc_bond_distance(coordinate* atom1, coordinate* atom2,
   }
 }
 
+static void _calc_bond_vector(coordinate* atom1, coordinate* atom2,
+                                int numatom, double* vectors)
+{
+  int i, j;
+  double dx[3];
+
+#ifdef PARALLEL
+#pragma omp parallel for private(i, dx, rsq) shared(distances)
+#endif
+  for (i=0; i<numatom; i++) {
+    dx[0] = atom1[i][0] - atom2[i][0];
+    dx[1] = atom1[i][1] - atom2[i][1];
+    dx[2] = atom1[i][2] - atom2[i][2];
+    for (j=0; j<3; j++) {
+        *(vectors+i*3+j) = dx[j];
+    }
+  }
+}
+
 static void _calc_bond_distance_ortho(coordinate* atom1, coordinate* atom2,
                                       int numatom, float* box, double* distances)
 {
@@ -611,6 +630,33 @@ static void _calc_bond_distance_ortho(coordinate* atom1, coordinate* atom2,
     *(distances+i) = sqrt(rsq);
   }
 }
+
+static void _calc_bond_vector_ortho(coordinate* atom1, coordinate* atom2,
+                                      int numatom, float* box, double* vectors)
+{
+  int i, j;
+  double dx[3];
+  float inverse_box[3];
+
+  inverse_box[0] = 1.0/box[0];
+  inverse_box[1] = 1.0/box[1];
+  inverse_box[2] = 1.0/box[2];
+
+#ifdef PARALLEL
+#pragma omp parallel for private(i, dx, rsq) shared(distances)
+#endif
+  for (i=0; i<numatom; i++) {
+    dx[0] = atom1[i][0] - atom2[i][0];
+    dx[1] = atom1[i][1] - atom2[i][1];
+    dx[2] = atom1[i][2] - atom2[i][2];
+    // PBC time!
+    minimum_image(dx, box, inverse_box);
+    for (j=0; j<3; j++) {
+        *(vectors+i*3+j) = dx[j];
+    }
+  }
+}
+
 static void _calc_bond_distance_triclinic(coordinate* atom1, coordinate* atom2,
                                           int numatom, float* box,
                                           double* distances)
@@ -633,6 +679,31 @@ static void _calc_bond_distance_triclinic(coordinate* atom1, coordinate* atom2,
     minimum_image_triclinic(dx, box);
     rsq = (dx[0]*dx[0])+(dx[1]*dx[1])+(dx[2]*dx[2]);
     *(distances+i) = sqrt(rsq);
+  }
+}
+
+static void _calc_bond_vector_triclinic(coordinate* atom1, coordinate* atom2,
+                                          int numatom, float* box,
+                                          double* vectors)
+{
+  int i, j;
+  double dx[3];
+
+  _triclinic_pbc(atom1, numatom, box);
+  _triclinic_pbc(atom2, numatom, box);
+
+#ifdef PARALLEL
+#pragma omp parallel for private(i, dx, rsq) shared(distances)
+#endif
+  for (i=0; i<numatom; i++) {
+    dx[0] = atom1[i][0] - atom2[i][0];
+    dx[1] = atom1[i][1] - atom2[i][1];
+    dx[2] = atom1[i][2] - atom2[i][2];
+    // PBC time!
+    minimum_image_triclinic(dx, box);
+    for (j=0; j<3; j++) {
+        *(vectors+i*3+j) = dx[j];
+    }
   }
 }
 
