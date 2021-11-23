@@ -599,7 +599,7 @@ static void _calc_bond_vector(coordinate* atom1, coordinate* atom2,
   double dx[3];
 
 #ifdef PARALLEL
-#pragma omp parallel for private(i, dx, rsq) shared(distances)
+#pragma omp parallel for private(i, j, dx) shared(vectors)
 #endif
   for (i=0; i<numatom; i++) {
     dx[0] = atom1[i][0] - atom2[i][0];
@@ -649,7 +649,7 @@ static void _calc_bond_vector_ortho(coordinate* atom1, coordinate* atom2,
   inverse_box[2] = 1.0/box[2];
 
 #ifdef PARALLEL
-#pragma omp parallel for private(i, dx, rsq) shared(distances)
+#pragma omp parallel for private(i, j, dx) shared(vectors)
 #endif
   for (i=0; i<numatom; i++) {
     dx[0] = atom1[i][0] - atom2[i][0];
@@ -699,7 +699,7 @@ static void _calc_bond_vector_triclinic(coordinate* atom1, coordinate* atom2,
   _triclinic_pbc(atom2, numatom, box);
 
 #ifdef PARALLEL
-#pragma omp parallel for private(i, dx, rsq) shared(distances)
+#pragma omp parallel for private(i, j, dx) shared(vectors)
 #endif
   for (i=0; i<numatom; i++) {
     dx[0] = atom1[i][0] - atom2[i][0];
