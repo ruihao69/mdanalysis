@@ -38,13 +38,7 @@ void minimum_image(double* x, float* box, float* inverse_box)
   for (i=0; i<3; i++) {
     if (box[i] > FLT_EPSILON) {
       s = inverse_box[i] * x[i];
-      if (s > 0) {
-        x[i] = box[i] * (s - floor(s * 2) / 2);
-      }
-      else
-      {
-        x[i] = box[i] * (s + ceil(s * 2) / 2);
-      }
+      x[i] = box[i] * (s - round(s));
     }
   }
 }
